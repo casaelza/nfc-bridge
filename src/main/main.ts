@@ -287,6 +287,12 @@ function createTray() {
   trayIconOn = nativeImage.createFromPath(trayOnPath);
   trayIconOff = nativeImage.createFromPath(trayOffPath);
 
+  // Resize for macOS menu bar
+  if (process.platform === 'darwin') {
+    trayIconOn = trayIconOn.resize({ width: 22, height: 22 });
+    trayIconOff = trayIconOff.resize({ width: 22, height: 22 });
+  }
+
   tray = new Tray(bridgeEnabled ? trayIconOn : trayIconOff);
   tray.setToolTip("NFC Desktop Bridge");
 
