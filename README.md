@@ -30,6 +30,14 @@ Voraussetzungen: Node.js installiert.
     ```
     Die ausführbare Datei befindet sich anschließend im `dist`-Ordner.
 
+4.  **macOS Build**:
+    ```bash
+    npm run dist:mac
+    ```
+    Die `.dmg` Datei wird im `dist` Ordner erstellt.
+    
+    *Hinweis für macOS*: Da die App nicht signiert ist, müssen Sie beim ersten Start die App im Programme-Ordner mit `Rechtsklick -> Öffnen` starten und den Sicherheitshinweis bestätigen. Danach lauft sie wie gewohnt.
+
 ## Verwendung
 
 Nach dem Start läuft die Anwendung auf Port `3333` (Standard).
