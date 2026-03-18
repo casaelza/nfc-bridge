@@ -4,6 +4,7 @@ import http from "http";
 import cors from "cors";
 import path from "path";
 import { NFC, Reader } from "nfc-pcsc";
+import { keyboard, Key } from "@nut-tree-fork/nut-js";
 // @ts-ignore
 import trayOnPath from './tray-on.png?asset';
 // @ts-ignore
@@ -29,6 +30,7 @@ let readerReady = false;
 let activeReader: Reader | null = null;
 let lastUID: string | null = null;
 let bridgeEnabled = true;
+let keyboardInputEnabled = true;
 let cardPresent = false;
 let hasShownCloseHint = false;
 
@@ -79,6 +81,13 @@ nfc.on("reader", (reader: Reader) => {
     if (!bridgeEnabled) return;
     lastUID = card.uid;
 
+    if (keyboardInputEnabled) {
+      keyboard.config.autoDelayMs = 0; // Remove typing delay
+      keyboard.type(card.uid).then(() => {
+        return keyboard.type(Key.Enter);
+      }).catch(err => console.error("[NFC] NutJS Error:", err));
+    }
+
     waiters.forEach(w => {
       clearTimeout(w.timer);
       w.resolve(card.uid);
@@ -119,6 +128,7 @@ api.use(express.json());
 api.get("/api/health", (_req, res) => {
   res.json({
     enabled: bridgeEnabled,
+    keyboardEnabled: keyboardInputEnabled,
     readerReady,
     reader: activeReader?.reader.name ?? null,
     lastUID,
@@ -131,6 +141,11 @@ api.post("/api/bridge/toggle", (_req, res) => {
   bridgeEnabled = !bridgeEnabled;
   updateTray();
   res.json({ enabled: bridgeEnabled });
+});
+
+api.post("/api/keyboard/toggle", (_req, res) => {
+  keyboardInputEnabled = !keyboardInputEnabled;
+  res.json({ keyboardEnabled: keyboardInputEnabled });
 });
 
 api.post("/api/nfc/wait", (_req, res) => {
@@ -205,7 +220,20 @@ function createWindow() {
     <span class="value" id="port">...</span>
   </div>
 
+  <!-- Neues Toggle für Tastatur-Input -->
+  <div class="status-row" style="align-items: center;">
+    <span class="label" style="color: #cbd5e1; font-weight: 500;">Tastatureingabe:</span>
+    <label style="display: flex; align-items: center; cursor: pointer;">
+      <input type="checkbox" id="kbToggle" onchange="toggleKeyboard()" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer; accent-color: #3b82f6;" />
+      <span id="kbStatusText" style="color: #94a3b8; font-size: 14px; font-weight: bold;">Aus</span>
+    </label>
+  </div>
+
   <button id="toggleBtn" class="btn" onclick="toggleBridge()">Loading...</button>
+
+  <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #64748b;">
+    (c) 2025 - Erstellt von D. Barbalinardo
+  </div>
 
   <script>
     const API_URL = "http://127.0.0.1:3333/api";
@@ -218,6 +246,18 @@ function createWindow() {
         document.getElementById("reader").textContent = data.reader || "No Reader";
         document.getElementById("port").textContent = data.port;
         
+        const kbToggle = document.getElementById("kbToggle");
+        const kbStatusText = document.getElementById("kbStatusText");
+        
+        kbToggle.checked = data.keyboardEnabled;
+        if (data.keyboardEnabled) {
+          kbStatusText.textContent = "Aktiv";
+          kbStatusText.style.color = "#4ade80";
+        } else {
+          kbStatusText.textContent = "Aus";
+          kbStatusText.style.color = "#94a3b8";
+        }
+
         const statusEl = document.getElementById("status");
         if (data.cardPresent) {
           statusEl.textContent = "Card Present (" + (data.lastUID || "") + ")";
@@ -246,6 +286,15 @@ function createWindow() {
         updateStatus();
       } catch (e) {
         alert("Failed to toggle bridge");
+      }
+    }
+
+    async function toggleKeyboard() {
+      try {
+        await fetch(API_URL + "/keyboard/toggle", { method: "POST" });
+        updateStatus();
+      } catch (e) {
+        alert("Failed to toggle keyboard input");
       }
     }
 
@@ -286,12 +335,6 @@ function createWindow() {
 function createTray() {
   trayIconOn = nativeImage.createFromPath(trayOnPath);
   trayIconOff = nativeImage.createFromPath(trayOffPath);
-
-  // Resize for macOS menu bar
-  if (process.platform === 'darwin') {
-    trayIconOn = trayIconOn.resize({ width: 22, height: 22 });
-    trayIconOff = trayIconOff.resize({ width: 22, height: 22 });
-  }
 
   tray = new Tray(bridgeEnabled ? trayIconOn : trayIconOff);
   tray.setToolTip("NFC Desktop Bridge");
