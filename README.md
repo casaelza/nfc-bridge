@@ -9,6 +9,7 @@ Dies ist eine Electron-Anwendung, die als Brücke zwischen einem lokal angeschlo
     *   *Hinweis*: Für ISO 14443-4 Tags wird die automatische Verarbeitung deaktiviert, um Fehler bei der Applikationsauswahl (AID) zu vermeiden. Die UID wird direkt ausgelesen.
 *   **Hintergrund-Betrieb**: Läuft im System-Tray minimiert weiter.
 *   **HTTP-API**: Einfache Integration in Web-Apps (kein Browser-Plugin nötig).
+*   **Tastatursimulation**: Kann gescannte UIDs automatisch als Tastatureingabe in das aktuell offene Programm tippen (per Desktop-UI oder API umschaltbar).
 
 ## Installation & Start
 
@@ -30,14 +31,6 @@ Voraussetzungen: Node.js installiert.
     ```
     Die ausführbare Datei befindet sich anschließend im `dist`-Ordner.
 
-4.  **macOS Build**:
-    ```bash
-    npm run dist:mac
-    ```
-    Die `.dmg` Datei wird im `dist` Ordner erstellt.
-    
-    *Hinweis für macOS*: Da die App nicht signiert ist, müssen Sie beim ersten Start die App im Programme-Ordner mit `Rechtsklick -> Öffnen` starten und den Sicherheitshinweis bestätigen. Danach lauft sie wie gewohnt.
-
 ## Verwendung
 
 Nach dem Start läuft die Anwendung auf Port `3333` (Standard).
@@ -58,6 +51,7 @@ Gibt den aktuellen Status der Bridge zurück.
 ```json
 {
   "enabled": true,
+  "keyboardEnabled": true,
   "readerReady": true,
   "reader": "ACS ACR122U 0",
   "lastUID": "04A1B2C3",
@@ -124,6 +118,11 @@ async function handleNfcLogin() {
 `POST /api/bridge/toggle`
 
 Deaktiviert oder aktiviert die Verarbeitung von NFC-Events temporär.
+
+### 4. Tastatursimulation an/ausschalten
+`POST /api/keyboard/toggle`
+
+Aktiviert oder deaktiviert die sofortige Tastatureingabe der UID beim Scannen. Wenn aktiviert, verhält sich das Programm wie ein physischer Tastatur-Scanner.
 
 ## Fehlerbehebung
 
