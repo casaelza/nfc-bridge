@@ -8,10 +8,10 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "dist": "electron-vite build && electron-builder --win",
-    "dist:mac": "electron-vite build && electron-builder --mac",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@nut-tree-fork/nut-js": "^4.2.6",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "nfc-pcsc": "^0.8.1",
@@ -28,21 +28,5 @@
     "electron-vite": "^2.1.0",
     "typescript": "^5.3.3",
     "vite": "^5.1.4"
-  },
-  "build": {
-    "appId": "com.nfc.bridge",
-    "productName": "NFC Bridge",
-    "mac": {
-      "category": "public.app-category.utilities",
-      "target": [
-        "dmg",
-        "zip"
-      ]
-    },
-    "win": {
-      "target": [
-        "nsis"
-      ]
-    }
   }
 }
